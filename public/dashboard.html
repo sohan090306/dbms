@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gym Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>GymAdmin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="members.html">Members</a>
+                <a href="trainers.html">Trainers</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="payments.html">Payments</a>
+                <a href="reports.html">Reports</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Overview Dashboard</h1>
+                <div class="user-info">Admin User</div>
+            </header>
+            
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Total Members</h3>
+                    <p class="card-value" id="totalMembers">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Total Trainers</h3>
+                    <p class="card-value" id="totalTrainers">Loading...</p>
+                </div>
+                <div class="card">
+                    <h3>Total Revenue</h3>
+                    <p class="card-value" id="totalRevenue">Loading...</p>
+                </div>
+            </div>
+            
+            <div class="recent-section">
+                <h2>Quick Actions</h2>
+                <div class="action-buttons">
+                    <a href="members.html" class="btn btn-primary">Add New Member</a>
+                    <a href="attendance.html" class="btn btn-secondary">Record Attendance</a>
+                    <a href="payments.html" class="btn btn-secondary">Log Payment</a>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
