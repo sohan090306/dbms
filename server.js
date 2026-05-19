@@ -60,15 +60,48 @@ app.get('/api/members', async (req, res) => {
 app.post('/api/members', async (req, res) => {
     const { name, email, phone, join_date, membership_id, trainer_id } = req.body;
     try {
-        const { error } = await db.from('members').insert({
-            name,
-            email,
-            phone,
-            join_date,
-            membership_id: membership_id ? parseInt(membership_id) : null,
-            trainer_id: trainer_id ? parseInt(trainer_id) : null
-        });
-        if (error) throw error;
+        const { data: memberData, error: memberError } = await db
+            .from('members')
+            .insert({
+                name,
+                email,
+                phone,
+                join_date,
+                membership_id: membership_id ? parseInt(membership_id) : null,
+                trainer_id: trainer_id ? parseInt(trainer_id) : null
+            })
+            .select('id')
+            .single();
+            
+        if (memberError) throw memberError;
+        const newMemberId = memberData.id;
+
+        // Auto-create initial payment record based on membership plan
+        let price = 50.00;
+        if (membership_id === '2' || membership_id === 2) price = 135.00;
+        else if (membership_id === '3' || membership_id === 3) price = 500.00;
+
+        const { error: paymentError } = await db
+            .from('payments')
+            .insert({
+                member_id: newMemberId,
+                amount: price,
+                payment_date: join_date,
+                payment_method: 'Cash'
+            });
+        if (paymentError) console.error('Auto-payment failed:', paymentError);
+
+        // Auto-create initial attendance record
+        const timeString = new Date().toTimeString().split(' ')[0];
+        const { error: attendanceError } = await db
+            .from('attendance')
+            .insert({
+                member_id: newMemberId,
+                attendance_date: join_date,
+                check_in_time: timeString
+            });
+        if (attendanceError) console.error('Auto-attendance failed:', attendanceError);
+
         res.status(201).json({ message: 'Member added successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -77,6 +110,9 @@ app.post('/api/members', async (req, res) => {
 
 app.delete('/api/members/:id', async (req, res) => {
     try {
+        await db.from('payments').delete().eq('member_id', req.params.id);
+        await db.from('attendance').delete().eq('member_id', req.params.id);
+        
         const { error } = await db.from('members').delete().eq('id', req.params.id);
         if (error) throw error;
         res.json({ message: 'Member deleted successfully' });

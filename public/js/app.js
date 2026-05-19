@@ -144,15 +144,47 @@ async function loadMembers() {
 
             try {
                 const client = await getSupabase();
-                const { error } = await client.from('members').insert({
-                    name,
-                    email,
-                    phone,
-                    join_date,
-                    membership_id: membership_id ? parseInt(membership_id) : null,
-                    trainer_id: trainer_id ? parseInt(trainer_id) : null
-                });
-                if (error) throw error;
+                const { data: memberData, error: memberError } = await client
+                    .from('members')
+                    .insert({
+                        name,
+                        email,
+                        phone,
+                        join_date,
+                        membership_id: membership_id ? parseInt(membership_id) : null,
+                        trainer_id: trainer_id ? parseInt(trainer_id) : null
+                    })
+                    .select('id')
+                    .single();
+                
+                if (memberError) throw memberError;
+                const newMemberId = memberData.id;
+
+                // Auto-create initial payment record based on membership plan
+                let price = 50.00;
+                if (membership_id === '2') price = 135.00;
+                else if (membership_id === '3') price = 500.00;
+
+                const { error: paymentError } = await client
+                    .from('payments')
+                    .insert({
+                        member_id: newMemberId,
+                        amount: price,
+                        payment_date: join_date,
+                        payment_method: 'Cash'
+                    });
+                if (paymentError) console.error('Auto-payment failed:', paymentError);
+
+                // Auto-create initial attendance record
+                const timeString = new Date().toTimeString().split(' ')[0];
+                const { error: attendanceError } = await client
+                    .from('attendance')
+                    .insert({
+                        member_id: newMemberId,
+                        attendance_date: join_date,
+                        check_in_time: timeString
+                    });
+                if (attendanceError) console.error('Auto-attendance failed:', attendanceError);
                 
                 toggleModal('addMemberModal');
                 form.reset();
@@ -168,6 +200,10 @@ async function deleteMember(id) {
     if (confirm('Are you sure you want to delete this member?')) {
         try {
             const client = await getSupabase();
+            // Delete dependent records first to satisfy foreign key constraints
+            await client.from('payments').delete().eq('member_id', id);
+            await client.from('attendance').delete().eq('member_id', id);
+            
             const { error } = await client.from('members').delete().eq('id', id);
             if (error) throw error;
             loadMembers();
