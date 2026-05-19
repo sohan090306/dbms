@@ -6,12 +6,8 @@ services:
     startCommand: node server.js
     envVars:
       - key: PORT
-        value: 3000
-      - key: DB_HOST
-        placeholder: "Enter your cloud MySQL host address (e.g. host.clever-cloud.com)"
-      - key: DB_USER
-        placeholder: "Enter your cloud MySQL username"
-      - key: DB_PASSWORD
-        placeholder: "Enter your cloud MySQL password"
-      - key: DB_NAME
-        placeholder: "Enter your cloud MySQL database name"
+        value: 10000
+      - key: SUPABASE_URL
+        value: https://rsimagfemyjqppevqdwn.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzaW1hZ2ZlbXlqcXBwZXZxZHduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTU4NDUsImV4cCI6MjA5NDc3MTg0NX0.FfexQiBnx28DsLHHN6MuHaeeOC1JRooRLK_jjQ1Px74

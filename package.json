@@ -1,19 +1,29 @@
 {
-  "name": "dbms",
+  "name": "gym-membership-management-system",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A full-stack Gym Membership Management System built with Node.js, Express, and MySQL — DBMS college mini-project.",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "gym",
+    "management",
+    "dbms",
+    "node",
+    "express",
+    "mysql"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.106.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mysql2": "^3.22.3"
+    "mysql2": "^3.22.3",
+    "pg": "^8.21.0"
   }
 }

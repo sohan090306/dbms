@@ -16,9 +16,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 // =====================================
 app.get('/api/dashboard', async (req, res) => {
     try {
-        const [[{ total_members }]] = await db.query('SELECT COUNT(*) as total_members FROM members');
-        const [[{ total_trainers }]] = await db.query('SELECT COUNT(*) as total_trainers FROM trainers');
-        const [[{ total_revenue }]] = await db.query('SELECT COALESCE(SUM(amount), 0) as total_revenue FROM payments');
+        const { count: total_members, error: err1 } = await db.from('members').select('*', { count: 'exact', head: true });
+        const { count: total_trainers, error: err2 } = await db.from('trainers').select('*', { count: 'exact', head: true });
+        const { data: payments, error: err3 } = await db.from('payments').select('amount');
+        
+        if (err1 || err2 || err3) throw new Error(err1?.message || err2?.message || err3?.message);
+        
+        const total_revenue = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
         
         res.json({ total_members, total_trainers, total_revenue });
     } catch (err) {
@@ -31,14 +35,22 @@ app.get('/api/dashboard', async (req, res) => {
 // =====================================
 app.get('/api/members', async (req, res) => {
     try {
-        const query = `
-            SELECT m.id, m.name, m.email, m.phone, m.join_date, 
-                   mb.plan_type as membership, t.name as trainer
-            FROM members m
-            LEFT JOIN memberships mb ON m.membership_id = mb.id
-            LEFT JOIN trainers t ON m.trainer_id = t.id
-        `;
-        const [rows] = await db.query(query);
+        const { data, error } = await db.from('members').select(`
+            id, name, email, phone, join_date,
+            memberships (plan_type),
+            trainers (name)
+        `);
+        if (error) throw error;
+        
+        const rows = data.map(m => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            phone: m.phone,
+            join_date: m.join_date,
+            membership: m.memberships?.plan_type || 'None',
+            trainer: m.trainers?.name || 'None'
+        }));
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -48,10 +60,15 @@ app.get('/api/members', async (req, res) => {
 app.post('/api/members', async (req, res) => {
     const { name, email, phone, join_date, membership_id, trainer_id } = req.body;
     try {
-        await db.query(
-            'INSERT INTO members (name, email, phone, join_date, membership_id, trainer_id) VALUES (?, ?, ?, ?, ?, ?)',
-            [name, email, phone, join_date, membership_id || null, trainer_id || null]
-        );
+        const { error } = await db.from('members').insert({
+            name,
+            email,
+            phone,
+            join_date,
+            membership_id: membership_id ? parseInt(membership_id) : null,
+            trainer_id: trainer_id ? parseInt(trainer_id) : null
+        });
+        if (error) throw error;
         res.status(201).json({ message: 'Member added successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -60,7 +77,8 @@ app.post('/api/members', async (req, res) => {
 
 app.delete('/api/members/:id', async (req, res) => {
     try {
-        await db.query('DELETE FROM members WHERE id = ?', [req.params.id]);
+        const { error } = await db.from('members').delete().eq('id', req.params.id);
+        if (error) throw error;
         res.json({ message: 'Member deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -72,8 +90,9 @@ app.delete('/api/members/:id', async (req, res) => {
 // =====================================
 app.get('/api/trainers', async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT * FROM trainers');
-        res.json(rows);
+        const { data, error } = await db.from('trainers').select('*').order('id', { ascending: true });
+        if (error) throw error;
+        res.json(data);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -82,10 +101,13 @@ app.get('/api/trainers', async (req, res) => {
 app.post('/api/trainers', async (req, res) => {
     const { name, specialization, phone, hire_date } = req.body;
     try {
-        await db.query(
-            'INSERT INTO trainers (name, specialization, phone, hire_date) VALUES (?, ?, ?, ?)',
-            [name, specialization, phone, hire_date]
-        );
+        const { error } = await db.from('trainers').insert({
+            name,
+            specialization,
+            phone,
+            hire_date
+        });
+        if (error) throw error;
         res.status(201).json({ message: 'Trainer added successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -94,7 +116,8 @@ app.post('/api/trainers', async (req, res) => {
 
 app.delete('/api/trainers/:id', async (req, res) => {
     try {
-        await db.query('DELETE FROM trainers WHERE id = ?', [req.params.id]);
+        const { error } = await db.from('trainers').delete().eq('id', req.params.id);
+        if (error) throw error;
         res.json({ message: 'Trainer deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -106,8 +129,9 @@ app.delete('/api/trainers/:id', async (req, res) => {
 // =====================================
 app.get('/api/memberships', async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT * FROM memberships');
-        res.json(rows);
+        const { data, error } = await db.from('memberships').select('*').order('id', { ascending: true });
+        if (error) throw error;
+        res.json(data);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -118,13 +142,17 @@ app.get('/api/memberships', async (req, res) => {
 // =====================================
 app.get('/api/attendance', async (req, res) => {
     try {
-        const query = `
-            SELECT a.id, m.name as member_name, a.attendance_date, a.check_in_time 
-            FROM attendance a
-            JOIN members m ON a.member_id = m.id
-            ORDER BY a.attendance_date DESC, a.check_in_time DESC
-        `;
-        const [rows] = await db.query(query);
+        const { data, error } = await db.from('attendance').select(`
+            id, attendance_date, check_in_time,
+            members (name)
+        `).order('attendance_date', { ascending: false }).order('check_in_time', { ascending: false });
+        if (error) throw error;
+        const rows = data.map(a => ({
+            id: a.id,
+            member_name: a.members?.name || 'Unknown',
+            attendance_date: a.attendance_date,
+            check_in_time: a.check_in_time
+        }));
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -134,10 +162,12 @@ app.get('/api/attendance', async (req, res) => {
 app.post('/api/attendance', async (req, res) => {
     const { member_id, attendance_date, check_in_time } = req.body;
     try {
-        await db.query(
-            'INSERT INTO attendance (member_id, attendance_date, check_in_time) VALUES (?, ?, ?)',
-            [member_id, attendance_date, check_in_time]
-        );
+        const { error } = await db.from('attendance').insert({
+            member_id: parseInt(member_id),
+            attendance_date,
+            check_in_time
+        });
+        if (error) throw error;
         res.status(201).json({ message: 'Attendance recorded successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -149,13 +179,18 @@ app.post('/api/attendance', async (req, res) => {
 // =====================================
 app.get('/api/payments', async (req, res) => {
     try {
-        const query = `
-            SELECT p.id, m.name as member_name, p.amount, p.payment_date, p.payment_method
-            FROM payments p
-            JOIN members m ON p.member_id = m.id
-            ORDER BY p.payment_date DESC
-        `;
-        const [rows] = await db.query(query);
+        const { data, error } = await db.from('payments').select(`
+            id, amount, payment_date, payment_method,
+            members (name)
+        `).order('payment_date', { ascending: false });
+        if (error) throw error;
+        const rows = data.map(p => ({
+            id: p.id,
+            member_name: p.members?.name || 'Unknown',
+            amount: p.amount,
+            payment_date: p.payment_date,
+            payment_method: p.payment_method
+        }));
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -165,10 +200,13 @@ app.get('/api/payments', async (req, res) => {
 app.post('/api/payments', async (req, res) => {
     const { member_id, amount, payment_date, payment_method } = req.body;
     try {
-        await db.query(
-            'INSERT INTO payments (member_id, amount, payment_date, payment_method) VALUES (?, ?, ?, ?)',
-            [member_id, amount, payment_date, payment_method]
-        );
+        const { error } = await db.from('payments').insert({
+            member_id: parseInt(member_id),
+            amount: parseFloat(amount),
+            payment_date,
+            payment_method
+        });
+        if (error) throw error;
         res.status(201).json({ message: 'Payment recorded successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -180,14 +218,20 @@ app.post('/api/payments', async (req, res) => {
 // =====================================
 app.get('/api/reports/members-plans', async (req, res) => {
     try {
-        const query = `
-            SELECT m.id, m.name, m.email, mb.plan_type, mb.price, t.name as trainer_name
-            FROM members m
-            LEFT JOIN memberships mb ON m.membership_id = mb.id
-            LEFT JOIN trainers t ON m.trainer_id = t.id
-            ORDER BY m.id ASC
-        `;
-        const [rows] = await db.query(query);
+        const { data, error } = await db.from('members').select(`
+            id, name, email,
+            memberships (plan_type, price),
+            trainers (name)
+        `).order('id', { ascending: true });
+        if (error) throw error;
+        const rows = data.map(m => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            plan_type: m.memberships?.plan_type || 'None',
+            price: m.memberships?.price || null,
+            trainer_name: m.trainers?.name || 'Unassigned'
+        }));
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -196,14 +240,15 @@ app.get('/api/reports/members-plans', async (req, res) => {
 
 app.get('/api/reports/attendance-stats', async (req, res) => {
     try {
-        const query = `
-            SELECT m.name, COUNT(a.id) as total_visits
-            FROM members m
-            LEFT JOIN attendance a ON m.id = a.member_id
-            GROUP BY m.id
-            ORDER BY total_visits DESC
-        `;
-        const [rows] = await db.query(query);
+        const { data, error } = await db.from('members').select(`
+            name,
+            attendance (id)
+        `);
+        if (error) throw error;
+        const rows = data.map(m => ({
+            name: m.name,
+            total_visits: m.attendance?.length || 0
+        })).sort((a, b) => b.total_visits - a.total_visits);
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -212,17 +257,33 @@ app.get('/api/reports/attendance-stats', async (req, res) => {
 
 app.get('/api/reports/revenue-by-plan', async (req, res) => {
     try {
-        const query = `
-            SELECT mb.plan_type, 
-                   COUNT(DISTINCT m.id) as member_count, 
-                   COALESCE(SUM(p.amount), 0) as total_revenue
-            FROM memberships mb
-            LEFT JOIN members m ON m.membership_id = mb.id
-            LEFT JOIN payments p ON p.member_id = m.id
-            GROUP BY mb.id
-            ORDER BY total_revenue DESC
-        `;
-        const [rows] = await db.query(query);
+        const { data, error } = await db.from('memberships').select(`
+            plan_type,
+            members (
+                id,
+                payments (amount)
+            )
+        `);
+        if (error) throw error;
+        
+        const rows = data.map(mb => {
+            const memberCount = mb.members?.length || 0;
+            let totalRevenue = 0;
+            if (mb.members) {
+                mb.members.forEach(m => {
+                    if (m.payments) {
+                        m.payments.forEach(p => {
+                            totalRevenue += parseFloat(p.amount);
+                        });
+                    }
+                });
+            }
+            return {
+                plan_type: mb.plan_type,
+                member_count: memberCount,
+                total_revenue: totalRevenue
+            };
+        }).sort((a, b) => b.total_revenue - a.total_revenue);
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
