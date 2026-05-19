@@ -290,6 +290,53 @@ app.get('/api/reports/revenue-by-plan', async (req, res) => {
     }
 });
 
+// =====================================
+// Admins Auth API
+// =====================================
+app.post('/api/auth/register', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const { data: existing, error: findError } = await db
+            .from('admins')
+            .select('username')
+            .eq('username', username)
+            .maybeSingle();
+            
+        if (findError) throw findError;
+        if (existing) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+
+        const { error } = await db.from('admins').insert({ username, password });
+        if (error) throw error;
+        
+        res.status(201).json({ message: 'Admin registered successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const { data: admin, error } = await db
+            .from('admins')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .maybeSingle();
+            
+        if (error) throw error;
+        if (!admin) {
+            return res.status(400).json({ error: 'Invalid username or password' });
+        }
+        
+        res.json({ success: true, message: 'Logged in successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Start Server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

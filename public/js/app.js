@@ -265,66 +265,87 @@ async function loadPayments() {
 }
 
 // ----------------------------------------------------
-// Auth Logic (LocalStorage Mock for DBMS Project)
+// Auth Logic (Database-backed for DBMS Project)
 // ----------------------------------------------------
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
-    loginForm.onsubmit = (e) => {
+    loginForm.onsubmit = async (e) => {
         e.preventDefault();
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value;
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
 
-        // Fetch registered users from localStorage
-        const users = JSON.parse(localStorage.getItem('gymAdmins')) || {};
-        
-        // Check if credentials match localStorage OR the default hardcoded admin
-        if ((users[user] && users[user] === pass) || ((user === 'admin' || user === 'SOHAN_K_A') && pass === 'admin')) {
+        errorDiv.innerText = '';
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                errorDiv.innerText = data.error || 'Invalid credentials. Please try again.';
+                return;
+            }
+
+            localStorage.setItem('gymAdminLoggedIn', username);
             window.location.href = 'dashboard.html';
-        } else {
-            document.getElementById('loginError').innerText = 'Invalid credentials. Please try again.';
+        } catch (err) {
+            errorDiv.style.color = 'var(--danger)';
+            errorDiv.innerText = 'Network error. Make sure the server is running.';
+            console.error(err);
         }
     };
 }
 
 const registerForm = document.getElementById('registerForm');
 if (registerForm) {
-    registerForm.onsubmit = (e) => {
+    registerForm.onsubmit = async (e) => {
         e.preventDefault();
-        const user = document.getElementById('regUsername').value.trim();
-        const pass = document.getElementById('regPassword').value;
+        const username = document.getElementById('regUsername').value.trim();
+        const password = document.getElementById('regPassword').value;
         const confirmPass = document.getElementById('regConfirmPassword').value;
         const msgDiv = document.getElementById('registerMsg');
 
-        if (pass !== confirmPass) {
+        msgDiv.innerText = '';
+
+        if (password !== confirmPass) {
             msgDiv.style.color = 'var(--danger)';
             msgDiv.innerText = 'Passwords do not match!';
             return;
         }
 
-        if (user.length < 3) {
+        if (username.length < 3) {
             msgDiv.style.color = 'var(--danger)';
             msgDiv.innerText = 'Username must be at least 3 characters long.';
             return;
         }
 
-        let users = JSON.parse(localStorage.getItem('gymAdmins')) || {};
-        
-        if (users[user] || user === 'admin') {
+        try {
+            const res = await fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                msgDiv.style.color = 'var(--danger)';
+                msgDiv.innerText = data.error || 'Registration failed.';
+                return;
+            }
+
+            msgDiv.style.color = 'var(--success)';
+            msgDiv.innerText = 'Registration successful! Redirecting to login...';
+
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } catch (err) {
             msgDiv.style.color = 'var(--danger)';
-            msgDiv.innerText = 'Username already exists. Please choose another.';
-            return;
+            msgDiv.innerText = 'Network error. Make sure the server is running.';
+            console.error(err);
         }
-
-        // Save new user
-        users[user] = pass;
-        localStorage.setItem('gymAdmins', JSON.stringify(users));
-
-        msgDiv.style.color = 'var(--success)';
-        msgDiv.innerText = 'Registration successful! Redirecting to login...';
-
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1500);
     };
 }
 
