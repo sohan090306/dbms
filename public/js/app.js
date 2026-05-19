@@ -1,4 +1,22 @@
-const API_BASE = `${window.location.origin}/api`;
+const SUPABASE_URL = 'https://rsimagfemyjqppevqdwn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzaW1hZ2ZlbXlqcXBwZXZxZHduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTU4NDUsImV4cCI6MjA5NDc3MTg0NX0.FfexQiBnx28DsLHHN6MuHaeeOC1JRooRLK_jjQ1Px74';
+let sb = null;
+
+// Dynamic loader for Supabase SDK from CDN
+async function getSupabase() {
+    if (sb) return sb;
+    if (!window.supabase) {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return sb;
+}
 
 // Utility to handle modal toggling
 function toggleModal(modalId) {
@@ -46,11 +64,28 @@ const formatDate = (dateString) => {
 // ----------------------------------------------------
 async function loadDashboard() {
     try {
-        const res = await fetch(`${API_BASE}/dashboard`);
-        const data = await res.json();
-        document.getElementById('totalMembers').innerText = data.total_members;
-        document.getElementById('totalTrainers').innerText = data.total_trainers;
-        document.getElementById('totalRevenue').innerText = formatCurrency(data.total_revenue);
+        const client = await getSupabase();
+        
+        // Fetch counts and revenue
+        const { count: totalMembers, error: err1 } = await client
+            .from('members')
+            .select('*', { count: 'exact', head: true });
+            
+        const { count: totalTrainers, error: err2 } = await client
+            .from('trainers')
+            .select('*', { count: 'exact', head: true });
+            
+        const { data: payments, error: err3 } = await client
+            .from('payments')
+            .select('amount');
+            
+        if (err1 || err2 || err3) throw (err1 || err2 || err3);
+        
+        const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+        
+        document.getElementById('totalMembers').innerText = totalMembers || 0;
+        document.getElementById('totalTrainers').innerText = totalTrainers || 0;
+        document.getElementById('totalRevenue').innerText = formatCurrency(totalRevenue);
     } catch (err) {
         console.error('Error loading dashboard data:', err);
     }
@@ -61,8 +96,18 @@ async function loadDashboard() {
 // ----------------------------------------------------
 async function loadMembers() {
     try {
-        const res = await fetch(`${API_BASE}/members`);
-        const members = await res.json();
+        const client = await getSupabase();
+        const { data: members, error } = await client
+            .from('members')
+            .select(`
+                id, name, email, phone, join_date,
+                memberships (plan_type),
+                trainers (name)
+            `)
+            .order('id', { ascending: true });
+            
+        if (error) throw error;
+        
         const tbody = document.getElementById('membersTableBody');
         tbody.innerHTML = '';
         members.forEach(m => {
@@ -73,8 +118,8 @@ async function loadMembers() {
                     <td>${m.email}</td>
                     <td>${m.phone}</td>
                     <td>${formatDate(m.join_date)}</td>
-                    <td>${m.membership || 'None'}</td>
-                    <td>${m.trainer || 'None'}</td>
+                    <td>${m.memberships?.plan_type || 'None'}</td>
+                    <td>${m.trainers?.name || 'None'}</td>
                     <td>
                         <button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">Delete</button>
                     </td>
@@ -90,30 +135,45 @@ async function loadMembers() {
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const payload = {
-                name: document.getElementById('m_name').value,
-                email: document.getElementById('m_email').value,
-                phone: document.getElementById('m_phone').value,
-                join_date: document.getElementById('m_join_date').value,
-                membership_id: document.getElementById('m_membership_id').value,
-                trainer_id: document.getElementById('m_trainer_id').value || null
-            };
-            await fetch(`${API_BASE}/members`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            toggleModal('addMemberModal');
-            form.reset();
-            loadMembers();
+            const name = document.getElementById('m_name').value;
+            const email = document.getElementById('m_email').value;
+            const phone = document.getElementById('m_phone').value;
+            const join_date = document.getElementById('m_join_date').value;
+            const membership_id = document.getElementById('m_membership_id').value;
+            const trainer_id = document.getElementById('m_trainer_id').value || null;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('members').insert({
+                    name,
+                    email,
+                    phone,
+                    join_date,
+                    membership_id: membership_id ? parseInt(membership_id) : null,
+                    trainer_id: trainer_id ? parseInt(trainer_id) : null
+                });
+                if (error) throw error;
+                
+                toggleModal('addMemberModal');
+                form.reset();
+                loadMembers();
+            } catch (err) {
+                alert('Error adding member: ' + err.message);
+            }
         };
     }
 }
 
 async function deleteMember(id) {
     if (confirm('Are you sure you want to delete this member?')) {
-        await fetch(`${API_BASE}/members/${id}`, { method: 'DELETE' });
-        loadMembers();
+        try {
+            const client = await getSupabase();
+            const { error } = await client.from('members').delete().eq('id', id);
+            if (error) throw error;
+            loadMembers();
+        } catch (err) {
+            alert('Error deleting member: ' + err.message);
+        }
     }
 }
 
@@ -122,8 +182,14 @@ async function deleteMember(id) {
 // ----------------------------------------------------
 async function loadTrainers() {
     try {
-        const res = await fetch(`${API_BASE}/trainers`);
-        const trainers = await res.json();
+        const client = await getSupabase();
+        const { data: trainers, error } = await client
+            .from('trainers')
+            .select('*')
+            .order('id', { ascending: true });
+            
+        if (error) throw error;
+        
         const tbody = document.getElementById('trainersTableBody');
         tbody.innerHTML = '';
         trainers.forEach(t => {
@@ -149,28 +215,38 @@ async function loadTrainers() {
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const payload = {
-                name: document.getElementById('t_name').value,
-                specialization: document.getElementById('t_spec').value,
-                phone: document.getElementById('t_phone').value,
-                hire_date: document.getElementById('t_hire_date').value
-            };
-            await fetch(`${API_BASE}/trainers`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            toggleModal('addTrainerModal');
-            form.reset();
-            loadTrainers();
+            const name = document.getElementById('t_name').value;
+            const specialization = document.getElementById('t_spec').value;
+            const phone = document.getElementById('t_phone').value;
+            const hire_date = document.getElementById('t_hire_date').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('trainers').insert({
+                    name, specialization, phone, hire_date
+                });
+                if (error) throw error;
+                
+                toggleModal('addTrainerModal');
+                form.reset();
+                loadTrainers();
+            } catch (err) {
+                alert('Error adding trainer: ' + err.message);
+            }
         };
     }
 }
 
 async function deleteTrainer(id) {
     if (confirm('Are you sure you want to delete this trainer?')) {
-        await fetch(`${API_BASE}/trainers/${id}`, { method: 'DELETE' });
-        loadTrainers();
+        try {
+            const client = await getSupabase();
+            const { error } = await client.from('trainers').delete().eq('id', id);
+            if (error) throw error;
+            loadTrainers();
+        } catch (err) {
+            alert('Error deleting trainer: ' + err.message);
+        }
     }
 }
 
@@ -179,15 +255,24 @@ async function deleteTrainer(id) {
 // ----------------------------------------------------
 async function loadAttendance() {
     try {
-        const res = await fetch(`${API_BASE}/attendance`);
-        const records = await res.json();
+        const client = await getSupabase();
+        const { data: records, error } = await client
+            .from('attendance')
+            .select(`
+                id, attendance_date, check_in_time,
+                members (name)
+            `)
+            .order('id', { ascending: true });
+            
+        if (error) throw error;
+        
         const tbody = document.getElementById('attendanceTableBody');
         tbody.innerHTML = '';
         records.forEach(r => {
             tbody.innerHTML += `
                 <tr>
                     <td>${r.id}</td>
-                    <td>${r.member_name}</td>
+                    <td>${r.members?.name || 'Unknown'}</td>
                     <td>${formatDate(r.attendance_date)}</td>
                     <td>${r.check_in_time}</td>
                 </tr>
@@ -201,19 +286,25 @@ async function loadAttendance() {
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const payload = {
-                member_id: document.getElementById('a_member_id').value,
-                attendance_date: document.getElementById('a_date').value,
-                check_in_time: document.getElementById('a_time').value
-            };
-            await fetch(`${API_BASE}/attendance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            toggleModal('addAttendanceModal');
-            form.reset();
-            loadAttendance();
+            const member_id = document.getElementById('a_member_id').value;
+            const attendance_date = document.getElementById('a_date').value;
+            const check_in_time = document.getElementById('a_time').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('attendance').insert({
+                    member_id: parseInt(member_id),
+                    attendance_date,
+                    check_in_time
+                });
+                if (error) throw error;
+                
+                toggleModal('addAttendanceModal');
+                form.reset();
+                loadAttendance();
+            } catch (err) {
+                alert('Error recording attendance: ' + err.message);
+            }
         };
     }
 }
@@ -223,15 +314,24 @@ async function loadAttendance() {
 // ----------------------------------------------------
 async function loadPayments() {
     try {
-        const res = await fetch(`${API_BASE}/payments`);
-        const payments = await res.json();
+        const client = await getSupabase();
+        const { data: payments, error } = await client
+            .from('payments')
+            .select(`
+                id, amount, payment_date, payment_method,
+                members (name)
+            `)
+            .order('id', { ascending: true });
+            
+        if (error) throw error;
+        
         const tbody = document.getElementById('paymentsTableBody');
         tbody.innerHTML = '';
         payments.forEach(p => {
             tbody.innerHTML += `
                 <tr>
                     <td>${p.id}</td>
-                    <td>${p.member_name}</td>
+                    <td>${p.members?.name || 'Unknown'}</td>
                     <td>${formatCurrency(p.amount)}</td>
                     <td>${formatDate(p.payment_date)}</td>
                     <td>${p.payment_method}</td>
@@ -246,20 +346,27 @@ async function loadPayments() {
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const payload = {
-                member_id: document.getElementById('p_member_id').value,
-                amount: document.getElementById('p_amount').value,
-                payment_date: document.getElementById('p_date').value,
-                payment_method: document.getElementById('p_method').value
-            };
-            await fetch(`${API_BASE}/payments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            toggleModal('addPaymentModal');
-            form.reset();
-            loadPayments();
+            const member_id = document.getElementById('p_member_id').value;
+            const amount = document.getElementById('p_amount').value;
+            const payment_date = document.getElementById('p_date').value;
+            const payment_method = document.getElementById('p_method').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('payments').insert({
+                    member_id: parseInt(member_id),
+                    amount: parseFloat(amount),
+                    payment_date,
+                    payment_method
+                });
+                if (error) throw error;
+                
+                toggleModal('addPaymentModal');
+                form.reset();
+                loadPayments();
+            } catch (err) {
+                alert('Error recording payment: ' + err.message);
+            }
         };
     }
 }
@@ -278,14 +385,17 @@ if (loginForm) {
         errorDiv.innerText = '';
 
         try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                errorDiv.innerText = data.error || 'Invalid credentials. Please try again.';
+            const client = await getSupabase();
+            const { data: admin, error } = await client
+                .from('admins')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password)
+                .maybeSingle();
+
+            if (error) throw error;
+            if (!admin) {
+                errorDiv.innerText = 'Invalid username or password.';
                 return;
             }
 
@@ -293,7 +403,7 @@ if (loginForm) {
             window.location.href = 'dashboard.html';
         } catch (err) {
             errorDiv.style.color = 'var(--danger)';
-            errorDiv.innerText = 'Network error. Make sure the server is running.';
+            errorDiv.innerText = 'Error connecting to database: ' + err.message;
             console.error(err);
         }
     };
@@ -323,17 +433,25 @@ if (registerForm) {
         }
 
         try {
-            const res = await fetch(`${API_BASE}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (!res.ok) {
+            const client = await getSupabase();
+            const { data: existing, error: checkError } = await client
+                .from('admins')
+                .select('username')
+                .eq('username', username)
+                .maybeSingle();
+
+            if (checkError) throw checkError;
+            if (existing) {
                 msgDiv.style.color = 'var(--danger)';
-                msgDiv.innerText = data.error || 'Registration failed.';
+                msgDiv.innerText = 'Username already exists.';
                 return;
             }
+
+            const { error: insertError } = await client
+                .from('admins')
+                .insert({ username, password });
+
+            if (insertError) throw insertError;
 
             msgDiv.style.color = 'var(--success)';
             msgDiv.innerText = 'Registration successful! Redirecting to login...';
@@ -343,7 +461,7 @@ if (registerForm) {
             }, 1500);
         } catch (err) {
             msgDiv.style.color = 'var(--danger)';
-            msgDiv.innerText = 'Network error. Make sure the server is running.';
+            msgDiv.innerText = 'Error saving registration: ' + err.message;
             console.error(err);
         }
     };
@@ -354,9 +472,20 @@ if (registerForm) {
 // ----------------------------------------------------
 async function loadReports() {
     try {
+        const client = await getSupabase();
+
         // 1. Members and Plans Report
-        const resPlans = await fetch(`${API_BASE}/reports/members-plans`);
-        const plansData = await resPlans.json();
+        const { data: plansData, error: err1 } = await client
+            .from('members')
+            .select(`
+                id, name, email,
+                memberships (plan_type, price),
+                trainers (name)
+            `)
+            .order('id', { ascending: true });
+
+        if (err1) throw err1;
+
         const plansBody = document.getElementById('plansReportTableBody');
         if (plansBody) {
             plansBody.innerHTML = '';
@@ -366,17 +495,29 @@ async function loadReports() {
                         <td>${row.id}</td>
                         <td>${row.name}</td>
                         <td>${row.email}</td>
-                        <td>${row.plan_type || 'None'}</td>
-                        <td>${row.price ? formatCurrency(row.price) : 'N/A'}</td>
-                        <td>${row.trainer_name || 'Unassigned'}</td>
+                        <td>${row.memberships?.plan_type || 'None'}</td>
+                        <td>${row.memberships?.price ? formatCurrency(row.memberships.price) : 'N/A'}</td>
+                        <td>${row.trainers?.name || 'Unassigned'}</td>
                     </tr>
                 `;
             });
         }
 
         // 2. Attendance Stats Report
-        const resAttendance = await fetch(`${API_BASE}/reports/attendance-stats`);
-        const attendanceData = await resAttendance.json();
+        const { data: attendanceRaw, error: err2 } = await client
+            .from('members')
+            .select(`
+                name,
+                attendance (id)
+            `);
+
+        if (err2) throw err2;
+
+        const attendanceData = attendanceRaw.map(m => ({
+            name: m.name,
+            total_visits: m.attendance?.length || 0
+        })).sort((a, b) => b.total_visits - a.total_visits);
+
         const attendanceBody = document.getElementById('attendanceReportTableBody');
         if (attendanceBody) {
             attendanceBody.innerHTML = '';
@@ -391,8 +532,37 @@ async function loadReports() {
         }
 
         // 3. Revenue by Plan Report
-        const resRevenue = await fetch(`${API_BASE}/reports/revenue-by-plan`);
-        const revenueData = await resRevenue.json();
+        const { data: membershipsRaw, error: err3 } = await client
+            .from('memberships')
+            .select(`
+                plan_type,
+                members (
+                    id,
+                    payments (amount)
+                )
+            `);
+
+        if (err3) throw err3;
+
+        const revenueData = membershipsRaw.map(mb => {
+            const memberCount = mb.members?.length || 0;
+            let totalRevenue = 0;
+            if (mb.members) {
+                mb.members.forEach(m => {
+                    if (m.payments) {
+                        m.payments.forEach(p => {
+                            totalRevenue += parseFloat(p.amount || 0);
+                        });
+                    }
+                });
+            }
+            return {
+                plan_type: mb.plan_type,
+                member_count: memberCount,
+                total_revenue: totalRevenue
+            };
+        }).sort((a, b) => b.total_revenue - a.total_revenue);
+
         const revenueBody = document.getElementById('revenueReportTableBody');
         if (revenueBody) {
             revenueBody.innerHTML = '';
