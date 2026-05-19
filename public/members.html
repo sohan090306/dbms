@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Members - Gym Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>GymAdmin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="members.html" class="active">Members</a>
+                <a href="trainers.html">Trainers</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="payments.html">Payments</a>
+                <a href="reports.html">Reports</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Manage Members</h1>
+            </header>
+            
+            <div class="content-section">
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="toggleModal('addMemberModal')">Add New Member</button>
+                    <input type="text" id="searchMember" placeholder="Search members..." onkeyup="filterTable('membersTable', this.value)">
+                </div>
+
+                <div class="table-container">
+                    <table id="membersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Join Date</th>
+                                <th>Membership</th>
+                                <th>Trainer</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleModal('addMemberModal')">&times;</span>
+            <h2>Add New Member</h2>
+            <form id="addMemberForm">
+                <div class="input-group">
+                    <label>Name</label>
+                    <input type="text" id="m_name" required>
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="m_email" required>
+                </div>
+                <div class="input-group">
+                    <label>Phone</label>
+                    <input type="text" id="m_phone">
+                </div>
+                <div class="input-group">
+                    <label>Join Date</label>
+                    <input type="date" id="m_join_date" required>
+                </div>
+                <div class="input-group">
+                    <label>Membership Plan</label>
+                    <select id="m_membership_id">
+                        <option value="1">Monthly</option>
+                        <option value="2">Quarterly</option>
+                        <option value="3">Yearly</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Trainer ID (Optional)</label>
+                    <input type="number" id="m_trainer_id">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Member</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadMembers);
+    </script>
+</body>
+</html>

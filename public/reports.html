@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Gym Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .report-section {
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+        }
+        .report-header {
+            background: #f9fafb;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .report-header h2 {
+            font-size: 1.2rem;
+            color: #111827;
+            margin: 0 0 0.25rem 0;
+            font-weight: 600;
+        }
+        .concept-badge {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4338ca;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            margin-bottom: 0.5rem;
+        }
+        .sql-query-box {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        .report-body {
+            padding: 1.5rem;
+        }
+        .badge-plan {
+            background-color: #d1fae5;
+            color: #065f46;
+            font-weight: 500;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>GymAdmin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="members.html">Members</a>
+                <a href="trainers.html">Trainers</a>
+                <a href="attendance.html">Attendance</a>
+                <a href="payments.html">Payments</a>
+                <a href="reports.html" class="active">Reports</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </nav>
+        </aside>
+        
+        <main class="main-content">
+            <header class="topbar">
+                <h1>DBMS Analytical Reports</h1>
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div id="downloaderAuthState" style="font-size: 0.9rem; color: #4b5563; display: none; align-items: center; gap: 0.5rem; background: #e0e7ff; padding: 0.3rem 0.8rem; border-radius: 20px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background-color: var(--success); border-radius: 50%;"></span>
+                        <span id="downloaderUserEmail" style="font-weight: 500;"></span>
+                        <a href="#" onclick="handleSupabaseSignOut(event)" style="color: var(--danger); text-decoration: none; font-weight: 600; margin-left: 0.5rem; font-size: 0.85rem;">Sign Out</a>
+                    </div>
+                    <div class="user-info">Admin User</div>
+                </div>
+            </header>
+
+            <!-- Report 1 -->
+            <div class="report-section">
+                <div class="report-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <span class="concept-badge">Concept: Relational LEFT JOINs</span>
+                        <h2 style="margin: 0 0 0.25rem 0;">Report 1: Members Plan & Trainer Allocations</h2>
+                        <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">Fetches every member alongside their corresponding membership plans and assigned personal trainers.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="handleReportDownload('plansReportTable', 'members_plans_report.csv')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; font-size: 0.9rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download Report
+                    </button>
+                </div>
+                <div class="report-body">
+                    <details>
+                        <summary style="cursor: pointer; color: #4361ee; font-weight: 500; margin-bottom: 0.5rem;">Show SQL Query</summary>
+                        <div class="sql-query-box">SELECT m.id, m.name, m.email, mb.plan_type, mb.price, t.name as trainer_name
+FROM members m
+LEFT JOIN memberships mb ON m.membership_id = mb.id
+LEFT JOIN trainers t ON m.trainer_id = t.id
+ORDER BY m.id ASC;</div>
+                    </details>
+                    
+                    <div class="table-container" style="margin-top: 1rem;">
+                        <table id="plansReportTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Member Name</th>
+                                    <th>Email</th>
+                                    <th>Plan Type</th>
+                                    <th>Price</th>
+                                    <th>Trainer Name</th>
+                                </tr>
+                            </thead>
+                            <tbody id="plansReportTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #6b7280;">Loading report data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report 2 -->
+            <div class="report-section">
+                <div class="report-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <span class="concept-badge">Concept: Aggregation (COUNT) & GROUP BY</span>
+                        <h2 style="margin: 0 0 0.25rem 0;">Report 2: Total Attendance Visits per Member</h2>
+                        <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">Aggregates check-in records to count total visits for each individual gym member.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="handleReportDownload('attendanceReportTable', 'attendance_stats_report.csv')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; font-size: 0.9rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download Report
+                    </button>
+                </div>
+                <div class="report-body">
+                    <details>
+                        <summary style="cursor: pointer; color: #4361ee; font-weight: 500; margin-bottom: 0.5rem;">Show SQL Query</summary>
+                        <div class="sql-query-box">SELECT m.name, COUNT(a.id) as total_visits
+FROM members m
+LEFT JOIN attendance a ON m.id = a.member_id
+GROUP BY m.id
+ORDER BY total_visits DESC;</div>
+                    </details>
+                    
+                    <div class="table-container" style="margin-top: 1rem;">
+                        <table id="attendanceReportTable">
+                            <thead>
+                                <tr>
+                                    <th>Member Name</th>
+                                    <th>Total Visits Tracked</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceReportTableBody">
+                                <tr>
+                                    <td colspan="2" style="text-align: center; color: #6b7280;">Loading report data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report 3 -->
+            <div class="report-section">
+                <div class="report-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <span class="concept-badge">Concept: Multi-Table Joins, SUM(), COUNT(DISTINCT) & GROUP BY</span>
+                        <h2 style="margin: 0 0 0.25rem 0;">Report 3: Financial Revenue Breakdown by Membership Plan</h2>
+                        <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">Correlates plans with member enrollments and sums up payment histories to show revenue by membership type.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="handleReportDownload('revenueReportTable', 'revenue_breakdown_report.csv')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; font-size: 0.9rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download Report
+                    </button>
+                </div>
+                <div class="report-body">
+                    <details>
+                        <summary style="cursor: pointer; color: #4361ee; font-weight: 500; margin-bottom: 0.5rem;">Show SQL Query</summary>
+                        <div class="sql-query-box">SELECT mb.plan_type, 
+       COUNT(DISTINCT m.id) as member_count, 
+       COALESCE(SUM(p.amount), 0) as total_revenue
+FROM memberships mb
+LEFT JOIN members m ON m.membership_id = mb.id
+LEFT JOIN payments p ON p.member_id = m.id
+GROUP BY mb.id
+ORDER BY total_revenue DESC;</div>
+                    </details>
+                    
+                    <div class="table-container" style="margin-top: 1rem;">
+                        <table id="revenueReportTable">
+                            <thead>
+                                <tr>
+                                    <th>Plan Type</th>
+                                    <th>Active Enrolled Members</th>
+                                    <th>Total Payments Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenueReportTableBody">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: #6b7280;">Loading report data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Supabase Auth Modal -->
+    <div id="supabaseAuthModal" class="modal">
+        <div class="modal-content" style="max-width: 420px; border-top: 4px solid var(--primary-color);">
+            <span class="close" onclick="toggleModal('supabaseAuthModal')">&times;</span>
+            <div id="authModalHeader" style="text-align: center; margin-bottom: 1.5rem;">
+                <h2 style="margin-bottom: 0.25rem; color: var(--primary-color);">Downloader Access</h2>
+                <p style="color: var(--text-light); font-size: 0.85rem; margin: 0;">Create a free account or login to download files.</p>
+            </div>
+            
+            <!-- Tab switches -->
+            <div style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                <button id="tabSignIn" class="btn" style="flex: 1; border-radius: 0; background: none; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); font-weight: 600; padding: 0.5rem; font-size: 0.95rem; outline: none;" onclick="switchAuthTab('signin')">Sign In</button>
+                <button id="tabSignUp" class="btn" style="flex: 1; border-radius: 0; background: none; color: var(--text-light); border-bottom: 2px solid transparent; font-weight: 500; padding: 0.5rem; font-size: 0.95rem; outline: none;" onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <form id="supabaseSignInForm" onsubmit="handleSupabaseSignIn(event)">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="sb_signin_email" required placeholder="name@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="sb_signin_password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="margin-top: 0.5rem;">Sign In & Download</button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="supabaseSignUpForm" onsubmit="handleSupabaseSignUp(event)" style="display: none;">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="sb_signup_email" required placeholder="name@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="sb_signup_password" required placeholder="Minimum 6 characters">
+                </div>
+                <div class="input-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="sb_signup_confirm" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary w-100" style="margin-top: 0.5rem;">Sign Up & Download</button>
+            </form>
+
+            <div id="supabaseAuthError" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
+            <div id="supabaseAuthSuccess" style="color: var(--success); font-size: 0.85rem; margin-top: 1rem; text-align: center;"></div>
+        </div>
+    </div>
+
+    <!-- Supabase JS Client library CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Initialize Supabase Client
+        const supabaseUrl = 'https://rsimagfemyjqppevqdwn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzaW1hZ2ZlbXlqcXBwZXZxZHduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTU4NDUsImV4cCI6MjA5NDc3MTg0NX0.FfexQiBnx28DsLHHN6MuHaeeOC1JRooRLK_jjQ1Px74';
+        const sbClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let pendingDownload = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReports();
+            checkSession();
+        });
+
+        async function checkSession() {
+            try {
+                const { data: { session } } = await sbClient.auth.getSession();
+                const authStateEl = document.getElementById('downloaderAuthState');
+                const userEmailEl = document.getElementById('downloaderUserEmail');
+                
+                if (session && session.user) {
+                    userEmailEl.innerText = session.user.email;
+                    authStateEl.style.display = 'flex';
+                } else {
+                    authStateEl.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Error checking auth session:', err);
+            }
+        }
+
+        async function handleReportDownload(tableId, filename) {
+            const { data: { session } } = await sbClient.auth.getSession();
+            if (session && session.user) {
+                // User is authenticated, download report directly
+                downloadCSVFromTable(tableId, filename);
+            } else {
+                // Store pending download request and open login modal
+                pendingDownload = { tableId, filename };
+                document.getElementById('sb_signin_email').value = '';
+                document.getElementById('sb_signin_password').value = '';
+                document.getElementById('sb_signup_email').value = '';
+                document.getElementById('sb_signup_password').value = '';
+                document.getElementById('sb_signup_confirm').value = '';
+                document.getElementById('supabaseAuthError').innerText = '';
+                document.getElementById('supabaseAuthSuccess').innerText = '';
+                toggleModal('supabaseAuthModal');
+            }
+        }
+
+        function switchAuthTab(tab) {
+            const tabSignIn = document.getElementById('tabSignIn');
+            const tabSignUp = document.getElementById('tabSignUp');
+            const signInForm = document.getElementById('supabaseSignInForm');
+            const signUpForm = document.getElementById('supabaseSignUpForm');
+            const errorDiv = document.getElementById('supabaseAuthError');
+            const successDiv = document.getElementById('supabaseAuthSuccess');
+
+            errorDiv.innerText = '';
+            successDiv.innerText = '';
+
+            if (tab === 'signin') {
+                tabSignIn.style.color = 'var(--primary-color)';
+                tabSignIn.style.borderBottom = '2px solid var(--primary-color)';
+                tabSignIn.style.fontWeight = '600';
+                
+                tabSignUp.style.color = 'var(--text-light)';
+                tabSignUp.style.borderBottom = '2px solid transparent';
+                tabSignUp.style.fontWeight = '500';
+
+                signInForm.style.display = 'block';
+                signUpForm.style.display = 'none';
+            } else {
+                tabSignUp.style.color = 'var(--primary-color)';
+                tabSignUp.style.borderBottom = '2px solid var(--primary-color)';
+                tabSignUp.style.fontWeight = '600';
+                
+                tabSignIn.style.color = 'var(--text-light)';
+                tabSignIn.style.borderBottom = '2px solid transparent';
+                tabSignIn.style.fontWeight = '500';
+
+                signUpForm.style.display = 'block';
+                signInForm.style.display = 'none';
+            }
+        }
+
+        async function handleSupabaseSignIn(e) {
+            e.preventDefault();
+            const email = document.getElementById('sb_signin_email').value.trim();
+            const password = document.getElementById('sb_signin_password').value;
+            const errorDiv = document.getElementById('supabaseAuthError');
+            const successDiv = document.getElementById('supabaseAuthSuccess');
+
+            errorDiv.innerText = '';
+            successDiv.innerText = '';
+
+            try {
+                const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    errorDiv.innerText = error.message;
+                    return;
+                }
+
+                successDiv.innerText = 'Authenticated successfully! Starting download...';
+                await checkSession();
+                
+                setTimeout(() => {
+                    toggleModal('supabaseAuthModal');
+                    if (pendingDownload) {
+                        downloadCSVFromTable(pendingDownload.tableId, pendingDownload.filename);
+                        pendingDownload = null;
+                    }
+                }, 1000);
+            } catch (err) {
+                errorDiv.innerText = 'An unexpected error occurred. Please try again.';
+                console.error(err);
+            }
+        }
+
+        async function handleSupabaseSignUp(e) {
+            e.preventDefault();
+            const email = document.getElementById('sb_signup_email').value.trim();
+            const password = document.getElementById('sb_signup_password').value;
+            const confirmPassword = document.getElementById('sb_signup_confirm').value;
+            const errorDiv = document.getElementById('supabaseAuthError');
+            const successDiv = document.getElementById('supabaseAuthSuccess');
+
+            errorDiv.innerText = '';
+            successDiv.innerText = '';
+
+            if (password.length < 6) {
+                errorDiv.innerText = 'Password must be at least 6 characters long.';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorDiv.innerText = 'Passwords do not match.';
+                return;
+            }
+
+            try {
+                const { data, error } = await sbClient.auth.signUp({ email, password });
+                if (error) {
+                    errorDiv.innerText = error.message;
+                    return;
+                }
+
+                if (data.session) {
+                    successDiv.innerText = 'Account created successfully! Starting download...';
+                    await checkSession();
+                    setTimeout(() => {
+                        toggleModal('supabaseAuthModal');
+                        if (pendingDownload) {
+                            downloadCSVFromTable(pendingDownload.tableId, pendingDownload.filename);
+                            pendingDownload = null;
+                        }
+                    }, 1000);
+                } else {
+                    successDiv.innerText = 'Account created! Please check your email for a verification link or try signing in.';
+                }
+            } catch (err) {
+                errorDiv.innerText = 'An unexpected error occurred. Please try again.';
+                console.error(err);
+            }
+        }
+
+        async function handleSupabaseSignOut(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to sign out of the downloader?')) {
+                await sbClient.auth.signOut();
+                await checkSession();
+            }
+        }
+
+        function downloadCSVFromTable(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) {
+                console.error('Table not found:', tableId);
+                return;
+            }
+            
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].style.display === 'none') continue;
+                
+                const cols = rows[i].querySelectorAll('td, th');
+                let row = [];
+                
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s+)/g, ' ').trim();
+                    data = data.replace(/"/g, '""');
+                    if (data.indexOf(',') > -1 || data.indexOf(' ') > -1) {
+                        data = '"' + data + '"';
+                    }
+                    row.push(data);
+                }
+                csv.push(row.join(','));
+            }
+            
+            const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const downloadLink = document.createElement('a');
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
