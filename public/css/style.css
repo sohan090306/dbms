@@ -5,15 +5,15 @@
 /* --- Google Font loaded in HTML --- */
 
 :root {
-    /* Primary Palette (Teal) */
-    --primary: #06B6D4;
-    --primary-glow: rgba(6, 182, 212, 0.28);
-    --primary-hover: #0496B3;
-    --primary-soft: rgba(6, 182, 212, 0.10);
+    /* Primary Palette (Violet) */
+    --primary: #7C3AED;
+    --primary-glow: rgba(124, 58, 237, 0.26);
+    --primary-hover: #6D28D9;
+    --primary-soft: rgba(124, 58, 237, 0.10);
 
-    /* Accent (Coral) */
-    --accent: #FF7A59;
-    --accent-glow: rgba(255, 122, 89, 0.18);
+    /* Accent (Amber) */
+    --accent: #F59E0B;
+    --accent-glow: rgba(245, 158, 11, 0.16);
 
     /* Surfaces */
     --bg-body: #071022;
