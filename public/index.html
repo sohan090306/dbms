@@ -4,26 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gym Management System - Login</title>
+    <meta name="description" content="Login to the Gym Membership Management System admin panel.">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body class="login-bg">
     <div class="login-container">
         <div class="login-card">
-            <h2>Gym Admin</h2>
-            <p>Welcome back! Please login to your account.</p>
+            <div style="margin-bottom: 1.5rem;">
+                <div style="width: 56px; height: 56px; margin: 0 auto 1rem; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-md);">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                        <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
+                    </svg>
+                </div>
+                <h2 style="background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">GymAdmin</h2>
+                <p style="color:var(--text-secondary);">Welcome back! Please login to your account.</p>
+            </div>
             <form id="loginForm">
                 <div class="input-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="admin" required>
+                    <input type="text" id="username" placeholder="Enter your username" required>
                 </div>
                 <div class="input-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="admin" required>
+                    <input type="password" id="password" placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Login</button>
-                <div style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
-                    Don't have an account? <a href="register.html" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Register here</a>
+                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                <div style="margin-top: 1.2rem; text-align: center; font-size: 0.9rem; color: var(--text-secondary);">
+                    Don't have an account? <a href="register.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Register here</a>
                 </div>
             </form>
             <div id="loginError" class="error-msg"></div>

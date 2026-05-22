@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="refresh" content="0; url=public/index.html" />
     <title>Gym Membership Management System</title>
     <!-- Google Font for premium look -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -17,19 +16,42 @@
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Gym Membership Management</h1>
-        <p>Welcome! Use the links below to explore the application.</p>
-        <ul style="list-style:none; padding:0;">
-            <li><a href="public/index.html">Dashboard</a></li>
-            <li><a href="public/register.html">Register</a></li>
-            <li><a href="public/members.html">Members</a></li>
-            <li><a href="public/trainers.html">Trainers</a></li>
-            <li><a href="public/attendance.html">Attendance</a></li>
-            <li><a href="public/payments.html">Payments</a></li>
-            <li><a href="public/reports.html">Reports</a></li>
-        </ul>
-    </div>
+    <main class="login-bg" style="padding:4rem 1rem;">
+        <div class="login-container" style="max-width:1100px; display:grid; grid-template-columns:1fr 420px; gap:2.5rem; align-items:center;">
+            <section style="color:var(--text);">
+                <h1 style="font-size:2.4rem; margin:0 0 0.6rem 0;">Welcome to GymAdmin</h1>
+                <p style="color:var(--text-secondary); font-size:1.05rem; margin-bottom:1.4rem;">Manage members, attendance, payments and reports with a modern, responsive interface.</p>
+                <div class="action-buttons" style="margin-bottom:1.2rem;">
+                    <a class="btn btn-primary" href="public/index.html">Open Dashboard</a>
+                    <a class="btn btn-secondary" href="public/register.html">Create Account</a>
+                </div>
+                <div class="card" style="max-width:680px; padding:1rem; margin-top:1rem; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);">
+                    <p style="margin:0; color:var(--text-muted);">Quick links:</p>
+                    <ul style="list-style:none; padding:0.6rem 0 0 0; margin:0; color:var(--text); display:flex; gap:1rem; flex-wrap:wrap;">
+                        <li><a href="public/members.html" class="btn btn-secondary btn-sm">Members</a></li>
+                        <li><a href="public/trainers.html" class="btn btn-secondary btn-sm">Trainers</a></li>
+                        <li><a href="public/attendance.html" class="btn btn-secondary btn-sm">Attendance</a></li>
+                        <li><a href="public/payments.html" class="btn btn-secondary btn-sm">Payments</a></li>
+                    </ul>
+                </div>
+            </section>
+
+            <aside>
+                <div class="login-card">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                        <div style="width:72px; height:72px; border-radius:14px; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-md);">
+                            <svg width="34" height="34" viewBox="0 0 24 24" fill="white"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/></svg>
+                        </div>
+                        <h2 style="margin:0;">GymAdmin</h2>
+                        <p style="color:var(--text-secondary); margin:0;">Sign in to continue to the admin panel</p>
+                    </div>
+                    <div style="margin-top:1rem;">
+                        <a class="btn btn-primary w-100" href="public/index.html">Sign In</a>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
     <script src="public/js/app.js"></script>
 </body>
 </html>

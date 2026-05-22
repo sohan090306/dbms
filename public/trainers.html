@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trainers - Gym Management</title>
+    <meta name="description" content="Manage gym trainers and their specializations.">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="layout">
@@ -31,7 +32,10 @@
             
             <div class="content-section">
                 <div class="action-bar">
-                    <button class="btn btn-primary" onclick="toggleModal('addTrainerModal')">Add New Trainer</button>
+                    <button class="btn btn-primary" onclick="toggleModal('addTrainerModal')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add New Trainer
+                    </button>
                     <input type="text" placeholder="Search trainers..." onkeyup="filterTable('trainersTable', this.value)">
                 </div>
 
@@ -64,21 +68,21 @@
             <form id="addTrainerForm">
                 <div class="input-group">
                     <label>Name</label>
-                    <input type="text" id="t_name" required>
+                    <input type="text" id="t_name" placeholder="Full name" required>
                 </div>
                 <div class="input-group">
                     <label>Specialization</label>
-                    <input type="text" id="t_spec" required>
+                    <input type="text" id="t_spec" placeholder="e.g. Strength Training" required>
                 </div>
                 <div class="input-group">
                     <label>Phone</label>
-                    <input type="text" id="t_phone">
+                    <input type="text" id="t_phone" placeholder="Phone number">
                 </div>
                 <div class="input-group">
                     <label>Hire Date</label>
                     <input type="date" id="t_hire_date" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Save Trainer</button>
+                <button type="submit" class="btn btn-primary w-100">Save Trainer</button>
             </form>
         </div>
     </div>

@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Members - Gym Management</title>
+    <meta name="description" content="Manage gym members, add new members, and track memberships.">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="layout">
@@ -31,7 +32,10 @@
             
             <div class="content-section">
                 <div class="action-bar">
-                    <button class="btn btn-primary" onclick="toggleModal('addMemberModal')">Add New Member</button>
+                    <button class="btn btn-primary" onclick="toggleModal('addMemberModal')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add New Member
+                    </button>
                     <input type="text" id="searchMember" placeholder="Search members..." onkeyup="filterTable('membersTable', this.value)">
                 </div>
 
@@ -66,15 +70,15 @@
             <form id="addMemberForm">
                 <div class="input-group">
                     <label>Name</label>
-                    <input type="text" id="m_name" required>
+                    <input type="text" id="m_name" placeholder="Full name" required>
                 </div>
                 <div class="input-group">
                     <label>Email</label>
-                    <input type="email" id="m_email" required>
+                    <input type="email" id="m_email" placeholder="email@example.com" required>
                 </div>
                 <div class="input-group">
                     <label>Phone</label>
-                    <input type="text" id="m_phone">
+                    <input type="text" id="m_phone" placeholder="Phone number">
                 </div>
                 <div class="input-group">
                     <label>Join Date</label>
@@ -90,9 +94,9 @@
                 </div>
                 <div class="input-group">
                     <label>Trainer ID (Optional)</label>
-                    <input type="number" id="m_trainer_id">
+                    <input type="number" id="m_trainer_id" placeholder="Leave blank for none">
                 </div>
-                <button type="submit" class="btn btn-primary">Save Member</button>
+                <button type="submit" class="btn btn-primary w-100">Save Member</button>
             </form>
         </div>
     </div>
