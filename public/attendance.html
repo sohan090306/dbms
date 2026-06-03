@@ -47,6 +47,7 @@
                                 <th>Member Name</th>
                                 <th>Date</th>
                                 <th>Check-in Time</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="attendanceTableBody">
@@ -77,6 +78,30 @@
                     <input type="time" id="a_time" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Record</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Attendance Modal -->
+    <div id="updateAttendanceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleModal('updateAttendanceModal')">&times;</span>
+            <h2>Update Attendance</h2>
+            <form id="updateAttendanceForm">
+                <input type="hidden" id="upd_a_id">
+                <div class="input-group">
+                    <label>Member ID</label>
+                    <input type="number" id="upd_a_member_id" placeholder="Enter member ID" required>
+                </div>
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="upd_a_date" required>
+                </div>
+                <div class="input-group">
+                    <label>Time</label>
+                    <input type="time" id="upd_a_time" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Update Record</button>
             </form>
         </div>
     </div>

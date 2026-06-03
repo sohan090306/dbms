@@ -121,6 +121,7 @@ async function loadMembers() {
                     <td>${m.memberships?.plan_type || 'None'}</td>
                     <td>${m.trainers?.name || 'None'}</td>
                     <td>
+                        <button class="btn btn-secondary btn-sm" onclick="openUpdateMemberModal(${m.id})">Update</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">Delete</button>
                     </td>
                 </tr>
@@ -194,6 +195,49 @@ async function loadMembers() {
             }
         };
     }
+
+    const updForm = document.getElementById('updateMemberForm');
+    if (updForm) {
+        updForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('upd_m_id').value;
+            const name = document.getElementById('upd_m_name').value;
+            const email = document.getElementById('upd_m_email').value;
+            const phone = document.getElementById('upd_m_phone').value;
+            const join_date = document.getElementById('upd_m_join_date').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('members').update({
+                    name, email, phone, join_date
+                }).eq('id', id);
+                
+                if (error) throw error;
+                
+                toggleModal('updateMemberModal');
+                loadMembers();
+            } catch (err) {
+                alert('Error updating member: ' + err.message);
+            }
+        };
+    }
+}
+
+async function openUpdateMemberModal(id) {
+    try {
+        const client = await getSupabase();
+        const { data, error } = await client.from('members').select('*').eq('id', id).single();
+        if (error) throw error;
+        
+        document.getElementById('upd_m_id').value = data.id;
+        document.getElementById('upd_m_name').value = data.name;
+        document.getElementById('upd_m_email').value = data.email;
+        document.getElementById('upd_m_phone').value = data.phone || '';
+        document.getElementById('upd_m_join_date').value = data.join_date;
+        toggleModal('updateMemberModal');
+    } catch (err) {
+        alert('Error fetching member details: ' + err.message);
+    }
 }
 
 async function deleteMember(id) {
@@ -237,6 +281,7 @@ async function loadTrainers() {
                     <td>${t.phone}</td>
                     <td>${formatDate(t.hire_date)}</td>
                     <td>
+                        <button class="btn btn-secondary btn-sm" onclick="openUpdateTrainerModal(${t.id})">Update</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteTrainer(${t.id})">Delete</button>
                     </td>
                 </tr>
@@ -270,6 +315,49 @@ async function loadTrainers() {
                 alert('Error adding trainer: ' + err.message);
             }
         };
+    }
+
+    const updForm = document.getElementById('updateTrainerForm');
+    if (updForm) {
+        updForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('upd_t_id').value;
+            const name = document.getElementById('upd_t_name').value;
+            const specialization = document.getElementById('upd_t_spec').value;
+            const phone = document.getElementById('upd_t_phone').value;
+            const hire_date = document.getElementById('upd_t_hire_date').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('trainers').update({
+                    name, specialization, phone, hire_date
+                }).eq('id', id);
+                
+                if (error) throw error;
+                
+                toggleModal('updateTrainerModal');
+                loadTrainers();
+            } catch (err) {
+                alert('Error updating trainer: ' + err.message);
+            }
+        };
+    }
+}
+
+async function openUpdateTrainerModal(id) {
+    try {
+        const client = await getSupabase();
+        const { data, error } = await client.from('trainers').select('*').eq('id', id).single();
+        if (error) throw error;
+        
+        document.getElementById('upd_t_id').value = data.id;
+        document.getElementById('upd_t_name').value = data.name;
+        document.getElementById('upd_t_spec').value = data.specialization;
+        document.getElementById('upd_t_phone').value = data.phone || '';
+        document.getElementById('upd_t_hire_date').value = data.hire_date;
+        toggleModal('updateTrainerModal');
+    } catch (err) {
+        alert('Error fetching trainer details: ' + err.message);
     }
 }
 
@@ -311,6 +399,9 @@ async function loadAttendance() {
                     <td>${r.members?.name || 'Unknown'}</td>
                     <td>${formatDate(r.attendance_date)}</td>
                     <td>${r.check_in_time}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="openUpdateAttendanceModal(${r.id})">Update</button>
+                    </td>
                 </tr>
             `;
         });
@@ -343,6 +434,49 @@ async function loadAttendance() {
             }
         };
     }
+
+    const updForm = document.getElementById('updateAttendanceForm');
+    if (updForm) {
+        updForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('upd_a_id').value;
+            const member_id = document.getElementById('upd_a_member_id').value;
+            const attendance_date = document.getElementById('upd_a_date').value;
+            const check_in_time = document.getElementById('upd_a_time').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('attendance').update({
+                    member_id: parseInt(member_id),
+                    attendance_date,
+                    check_in_time
+                }).eq('id', id);
+                
+                if (error) throw error;
+                
+                toggleModal('updateAttendanceModal');
+                loadAttendance();
+            } catch (err) {
+                alert('Error updating attendance: ' + err.message);
+            }
+        };
+    }
+}
+
+async function openUpdateAttendanceModal(id) {
+    try {
+        const client = await getSupabase();
+        const { data, error } = await client.from('attendance').select('*').eq('id', id).single();
+        if (error) throw error;
+        
+        document.getElementById('upd_a_id').value = data.id;
+        document.getElementById('upd_a_member_id').value = data.member_id;
+        document.getElementById('upd_a_date').value = data.attendance_date;
+        document.getElementById('upd_a_time').value = data.check_in_time;
+        toggleModal('updateAttendanceModal');
+    } catch (err) {
+        alert('Error fetching attendance details: ' + err.message);
+    }
 }
 
 // ----------------------------------------------------
@@ -371,6 +505,9 @@ async function loadPayments() {
                     <td>${formatCurrency(p.amount)}</td>
                     <td>${formatDate(p.payment_date)}</td>
                     <td>${p.payment_method}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="openUpdatePaymentModal(${p.id})">Update</button>
+                    </td>
                 </tr>
             `;
         });
@@ -404,6 +541,52 @@ async function loadPayments() {
                 alert('Error recording payment: ' + err.message);
             }
         };
+    }
+
+    const updForm = document.getElementById('updatePaymentForm');
+    if (updForm) {
+        updForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('upd_p_id').value;
+            const member_id = document.getElementById('upd_p_member_id').value;
+            const amount = document.getElementById('upd_p_amount').value;
+            const payment_date = document.getElementById('upd_p_date').value;
+            const payment_method = document.getElementById('upd_p_method').value;
+
+            try {
+                const client = await getSupabase();
+                const { error } = await client.from('payments').update({
+                    member_id: parseInt(member_id),
+                    amount: parseFloat(amount),
+                    payment_date,
+                    payment_method
+                }).eq('id', id);
+                
+                if (error) throw error;
+                
+                toggleModal('updatePaymentModal');
+                loadPayments();
+            } catch (err) {
+                alert('Error updating payment: ' + err.message);
+            }
+        };
+    }
+}
+
+async function openUpdatePaymentModal(id) {
+    try {
+        const client = await getSupabase();
+        const { data, error } = await client.from('payments').select('*').eq('id', id).single();
+        if (error) throw error;
+        
+        document.getElementById('upd_p_id').value = data.id;
+        document.getElementById('upd_p_member_id').value = data.member_id;
+        document.getElementById('upd_p_amount').value = data.amount;
+        document.getElementById('upd_p_date').value = data.payment_date;
+        document.getElementById('upd_p_method').value = data.payment_method;
+        toggleModal('updatePaymentModal');
+    } catch (err) {
+        alert('Error fetching payment details: ' + err.message);
     }
 }
 

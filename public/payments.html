@@ -48,6 +48,7 @@
                                 <th>Amount ($)</th>
                                 <th>Date</th>
                                 <th>Method</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="paymentsTableBody">
@@ -87,6 +88,39 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Save Payment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Payment Modal -->
+    <div id="updatePaymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleModal('updatePaymentModal')">&times;</span>
+            <h2>Update Payment</h2>
+            <form id="updatePaymentForm">
+                <input type="hidden" id="upd_p_id">
+                <div class="input-group">
+                    <label>Member ID</label>
+                    <input type="number" id="upd_p_member_id" placeholder="Enter member ID" required>
+                </div>
+                <div class="input-group">
+                    <label>Amount ($)</label>
+                    <input type="number" step="0.01" id="upd_p_amount" placeholder="0.00" required>
+                </div>
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="upd_p_date" required>
+                </div>
+                <div class="input-group">
+                    <label>Method</label>
+                    <select id="upd_p_method">
+                        <option value="Cash">Cash</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Update Payment</button>
             </form>
         </div>
     </div>

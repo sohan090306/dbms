@@ -87,6 +87,34 @@
         </div>
     </div>
 
+    <!-- Update Trainer Modal -->
+    <div id="updateTrainerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleModal('updateTrainerModal')">&times;</span>
+            <h2>Update Trainer</h2>
+            <form id="updateTrainerForm">
+                <input type="hidden" id="upd_t_id">
+                <div class="input-group">
+                    <label>Name</label>
+                    <input type="text" id="upd_t_name" placeholder="Full name" required>
+                </div>
+                <div class="input-group">
+                    <label>Specialization</label>
+                    <input type="text" id="upd_t_spec" placeholder="e.g. Strength Training" required>
+                </div>
+                <div class="input-group">
+                    <label>Phone</label>
+                    <input type="text" id="upd_t_phone" placeholder="Phone number">
+                </div>
+                <div class="input-group">
+                    <label>Hire Date</label>
+                    <input type="date" id="upd_t_hire_date" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Update Trainer</button>
+            </form>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', loadTrainers);
